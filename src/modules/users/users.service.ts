@@ -9,7 +9,7 @@ import * as bcrypt from 'bcryptjs';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { TokensService } from '../tokens/tokens.service';
-import { TokenType } from '@prisma/client';
+import { TokenType, User } from '@prisma/client';
 import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 
 @Injectable()
@@ -17,14 +17,17 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private tokensService: TokensService,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
     const data = createUserDto;
     data.password = await bcrypt.hash(data.password, 8);
-    const user = await this.prisma.user.create({ data });
-
-    if (!user) throw new BadRequestException();
+    let user: User;
+    try {
+      user = await this.prisma.user.create({ data });
+    } catch {
+      throw new BadRequestException();
+    }
     const token = await this.tokensService.create(user.id, TokenType.CONFIRM);
     this.sendConfirmationMail(user.email, token.id);
 
@@ -112,7 +115,11 @@ export class UsersService {
 
   async confirm(confirmationId: string) {
     const token = await this.tokensService.findOne(confirmationId);
+
+    if (!token) throw new NotFoundException();
+
     if (token.type !== TokenType.CONFIRM) throw new BadRequestException();
+
     const user = await this.findById(token.userId);
     await Promise.all([
       this.prisma.user.update({
@@ -126,9 +133,9 @@ export class UsersService {
     return { message: 'User confirmed successfully.' };
   }
 
-  private async sendConfirmationMail(email: string, tokenId: string) {}
+  private async sendConfirmationMail(email: string, tokenId: string) { }
 
-  private async sendRecoveryMail(email: string, tokenId: string) {}
+  private async sendRecoveryMail(email: string, tokenId: string) { }
 
   async validateHash(content: string, hash: string) {
     return await bcrypt.compare(content, hash);
