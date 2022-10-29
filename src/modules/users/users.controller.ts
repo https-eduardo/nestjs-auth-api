@@ -19,10 +19,11 @@ import { RequestRecoveryDto } from './dto/request-recovery.dto';
 import { FindRecoveryByIdDto } from './dto/find-recovery.dto';
 import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 import { FindConfirmationByIdDto } from './dto/find-confirmation.dto';
+import { TokenType } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly service: UsersService) {}
+  constructor(private readonly service: UsersService) { }
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.service.create(createUserDto);
@@ -51,6 +52,14 @@ export class UsersController {
   @Patch('confirm/:confirmationId')
   async confirm(@Param() findConfirmationByIdDto: FindConfirmationByIdDto) {
     return await this.service.confirm(findConfirmationByIdDto.confirmationId);
+  }
+
+  @Get('recovery/:recoveryId')
+  async findRecoveryToken(@Param() findRecoveryByIdDto: FindRecoveryByIdDto) {
+    return await this.service.findTokenById(
+      findRecoveryByIdDto.recoveryId,
+      TokenType.RECOVERY,
+    );
   }
 
   @Patch('recovery/:recoveryId')
