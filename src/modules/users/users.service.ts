@@ -82,6 +82,13 @@ export class UsersService {
     return user;
   }
 
+  async findTokenById(recoveryId: string, type: TokenType) {
+    const token = await this.tokensService.findOne(recoveryId);
+    if (!token || token.type !== type) throw new NotFoundException();
+
+    return token;
+  }
+
   async requestRecovery(email: string) {
     const user = await this.findByEmail(email);
     const token = await this.tokensService.create(user.id, TokenType.RECOVERY);
@@ -96,11 +103,14 @@ export class UsersService {
     recoveryId: string,
     recoveryPasswordDto: RecoveryPasswordDto,
   ) {
-    const { password } = recoveryPasswordDto;
-    const token = await this.tokensService.findOne(recoveryId);
-    if (token.type !== TokenType.RECOVERY) throw new BadRequestException();
+    const { password, confirmPassword } = recoveryPasswordDto;
+
+    if (password !== confirmPassword) throw new BadRequestException();
+
+    const token = await this.findTokenById(recoveryId, TokenType.RECOVERY);
     const user = await this.findById(token.userId);
     const hashedPassword = await bcrypt.hash(password, 8);
+
     await Promise.all([
       this.prisma.user.update({
         where: { id: user.id },
@@ -110,16 +120,12 @@ export class UsersService {
       }),
       this.tokensService.remove(recoveryId),
     ]);
+
     return { message: 'Password recovery successfully.' };
   }
 
   async confirm(confirmationId: string) {
-    const token = await this.tokensService.findOne(confirmationId);
-
-    if (!token) throw new NotFoundException();
-
-    if (token.type !== TokenType.CONFIRM) throw new BadRequestException();
-
+    const token = await this.findTokenById(confirmationId, TokenType.CONFIRM);
     const user = await this.findById(token.userId);
     await Promise.all([
       this.prisma.user.update({

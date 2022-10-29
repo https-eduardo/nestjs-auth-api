@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TokensService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(userId: string, type: TokenType) {
     return await this.prisma.token.create({
@@ -12,13 +12,13 @@ export class TokensService {
     });
   }
 
-  async findOne(tokenId: string) {
+  async findOne(id: string) {
     return await this.prisma.token.findUnique({
-      where: { id: tokenId },
+      where: { id },
     });
   }
 
-  async remove(tokenId: string) {
-    return await this.prisma.token.delete({ where: { id: tokenId } });
+  async remove(id: string) {
+    return await this.prisma.token.delete({ where: { id } });
   }
 }
