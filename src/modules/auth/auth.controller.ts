@@ -9,14 +9,16 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { User } from '../common/decorators/user.decorator';
 import { AuthService } from './auth.service';
 import { AuthLoginDto } from './dto/auth-login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtRefreshTokenGuard } from './guards/jwt-refresh-token.guard';
+import { JwtUserPayload } from '../common/types/user-payload.type';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly service: AuthService) {}
+  constructor(private readonly service: AuthService) { }
   @Post()
   @HttpCode(200)
   async login(
@@ -55,9 +57,11 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard, JwtRefreshTokenGuard)
   @HttpCode(200)
-  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const { userId } = req.user as { userId: string };
-    await this.service.logout(userId);
+  async logout(
+    @User() user: JwtUserPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    await this.service.logout(user.userId);
     // Clear cookies
     res.cookie('access_token', null);
     res.cookie('refresh_token', null);

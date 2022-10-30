@@ -20,10 +20,12 @@ import { FindRecoveryByIdDto } from './dto/find-recovery.dto';
 import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 import { FindConfirmationByIdDto } from './dto/find-confirmation.dto';
 import { TokenType } from '@prisma/client';
+import { User } from '../common/decorators/user.decorator';
+import { JwtUserPayload } from '../common/types/user-payload.type';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly service: UsersService) { }
+  constructor(private readonly service: UsersService) {}
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.service.create(createUserDto);
@@ -33,12 +35,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async changePassword(
-    @Req() req: Request,
+    @User() user: JwtUserPayload,
     @Res({ passthrough: true }) res: Response,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    const { userId } = req.user as { userId: string };
-    await this.service.changePassword(userId, changePasswordDto);
+    await this.service.changePassword(user.userId, changePasswordDto);
     res.cookie('access_token', null);
     res.cookie('refresh_token', null);
   }
@@ -75,7 +76,7 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@Req() req: Request) {
-    return req.user;
+  me(@User() user: JwtUserPayload) {
+    return user;
   }
 }
