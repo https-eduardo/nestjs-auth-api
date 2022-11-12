@@ -20,8 +20,8 @@ import { FindRecoveryByIdDto } from './dto/find-recovery.dto';
 import { RecoveryPasswordDto } from './dto/recovery-password.dto';
 import { FindConfirmationByIdDto } from './dto/find-confirmation.dto';
 import { TokenType } from '@prisma/client';
-import { User } from '../common/decorators/user.decorator';
-import { JwtUserPayload } from '../common/types/user-payload.type';
+import { User } from '../../common/decorators/user.decorator';
+import { JwtUserPayload } from '../../common/types/user-payload.type';
 
 @Controller('users')
 export class UsersController {
